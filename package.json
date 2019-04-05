@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/codycoombes/mortage-calculator-api#readme",
   "dependencies": {
-    "express": "^4.14.0"
+    "express": "^4.14.0",
+    "body-parser": "^1.18.2"
   }
 }
