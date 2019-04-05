@@ -1,0 +1,22 @@
+{
+  "name": "mortgage-calculator-api",
+  "version": "1.0.0",
+  "description": "API for calculating mortgages",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codycoombes/mortage-calculator-api.git"
+  },
+  "author": "Cody Coombes",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/codycoombes/mortage-calculator-api/issues"
+  },
+  "homepage": "https://github.com/codycoombes/mortage-calculator-api#readme",
+  "dependencies": {
+    "express": "^4.14.0"
+  }
+}
