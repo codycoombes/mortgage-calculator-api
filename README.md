@@ -1,12 +1,12 @@
 # Mortgage Calculator API
 API for calculating mortgages that accepts and returns JSON
 
-Implemented using Expressjs and Nodejs
+Implemented using Express.js and Node.js
 
-Fully tested using ExpressJS version 4.14.0 and Postman
+Tested using Express.js version 4.14.0, Node.js version 10.15.3, and Postman chrome extension
 
 Setup: <br>
-Navigate to this workspace <br>
+```Navigate to this workspace``` <br>
 ```npm install``` <br>
 ```node index.js``` <br>
 

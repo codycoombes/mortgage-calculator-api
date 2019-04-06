@@ -3,13 +3,17 @@
 
 var express = require('express');
 var tools = require('./tools');
-var bodyParser = require("body-parser");
+var body_parser = require("body-parser");
 var server;
-var interestRate = 0.025;
+var interest_rate = 0.025;
 var app = express();
 
+app.use(body_parser.json())
+app.use(body_parser.urlencoded({extended: true}))
+
 // Get the recurring payment amount of a mortgage
-// GET request format: localhost:3000/payment-amount?json={"askingPrice": 100000. "downPayment": 10000, "paymentSchedule": "biweekly", "amortPeriod": 10}
+// Accepts and returns JSON
+// Must have all the fields or returns error
 //
 // INPUT:
 // askingPrice: Asking price in dollars
@@ -20,35 +24,36 @@ var app = express();
 // RETURN: Recurring payment amount of a mortgage in JSON format
 app.get('/payment-amount', (req, res) => {
 
-    // Verify that the parameters are not empty
-    if (!req.query) {
-        var error = "Input field is empty.";
-        return res.send(errorHandler(error, 404));
-    }
-
-    // Parse input into JSON object and validate fields
-	var jsonObj = JSON.parse(req.query.json);
-    var errors = validate(jsonObj);
+    // Validate the input and error check
+    var errors = tools.validate(req.body);
 
     if (errors.length) {
-        return res.send(errorHandler(errors, 404))
+        return res.send(tools.errorHandler(errors, 400))
     }
 
     else {
 
-        var askingPrice = jsonObj.askingPrice;
-        var downPayment = jsonObj.downPayment;
-        var paymentSchedule = jsonObj.paymentSchedule;
-        var amortPeriod = jsonObj.amortPeriod;
+        var asking_price = req.body.asking_price;
+        var down_payment = req.body.down_payment;
+        var payment_schedule = req.body.payment_schedule.toLowerCase();
+        var amortization_period = req.body.amortization_period;
     	
-        var payment = tools.calculator(askingPrice, downPayment, paymentSchedule, amortPeriod, interestRate);
+        var payment = tools.mortgage(asking_price, down_payment, payment_schedule, amortization_period, interest_rate);
         
-        res.json(
-        {
-            paymentAmount : payment,
-            status : 200,
-            timestamp : parseInt(Date.now())
-        });
+        if (payment !== -1) {
+            res.json(
+            {
+                payment_amount : payment,
+                payment_schedule: payment_schedule,
+                status : 200,
+                timestamp : parseInt(Date.now())
+            });
+        }
+
+        else {
+            errors = "Down payment must be at least 5% of first $500k plus 10% of any amount above $500k (So $50k on a $750k mortgage)";
+            return res.send(tools.errorHandler(errors, 400))
+        }
     }
 
 });
@@ -60,26 +65,19 @@ app.get('/mortgage-amount', (req, res) => {
 
 // Change the interest rate (%) used by the application
 // INPUT:
-// interestRate: the new interest rate
+// interestRate: the new interest rate (from 0 to 100)
 // RETURN: the old and new interest rate
 app.patch('/interest-rate', (req, res) => {
-     // Verify that the parameters are not empty
-    if (!req.query) {
-        var error = "Input field is empty.";
-        return res.send(errorHandler(error, 404));
-    }
 
-    // Parse input into JSON object
-    var jsonObj = JSON.parse(req.query.json);
-	var oldinterestRate = interestRate;
-    interestRate = jsonObj.interestRate;
+	var old_interest_rate = interest_rate;
+    interest_rate = req.body.interest_rate / 100;
 
     // Return JSON object if valid otherwise return error message
-    if (typeof interestRate === "number" && interestRate >= 0) {
+    if (typeof interest_rate === "number" && interest_rate >= 0 && interest_rate <= 100) {
     	res.json(
         {
-            oldinterestRate: oldinterestRate,
-            newinterestRate: interestRate,
+            old_interest_rate: old_interest_rate,
+            new_interest_rate: interest_rate,
             status: 200,
             timestamp: parseInt(Date.now())
         });
@@ -87,67 +85,11 @@ app.patch('/interest-rate', (req, res) => {
 
     else {
         var error = "Interest Rate is invalid.";
-        return res.send(errorHandler(error, 404));
+        return res.send(tools.errorHandler(error, 400));
     }
 });
 
 
-// Validate that are no missing parameters and parameters are valid
-// INPUT: JSON object
-// RETURN: error message
-function validate(req) {
-
-    const errors  = [];
-    const paymentScheduleTypes = ["weekly", "biweekly", "monthly"];
-
-    // Check if any fields are missing
-    if (!req.askingPrice || !req.downPayment || !req.paymentSchedule || !req.amortPeriod ) {
-        errors.push("Missing Input Fields.");
-    }
-
-    // Check if fields are valid
-    else {
-
-        if ((typeof req.askingPrice !== 'number') || req.askingPrice <= 0) {
-            errors.push("Invalid Asking Price.");
-        }
-
-        if ((typeof req.downPayment !== 'number') || req.downPayment <= 0) {
-            errors.push("Invalid Down Payment.");
-        }
-
-        if (req.askingPrice < req.downPayment) {
-            errors.push("Down Payment Cannot Be Larger Than Asking Price");
-        }
-
-        if ((typeof req.paymentSchedule !== 'string') || paymentScheduleTypes.indexOf(req.paymentSchedule.toLowerCase()) <= -1) {
-            errors.push("Invalid Payment Schedule (Only Valid Inputs Are: weekly, biweekly, or monthly).");
-        }
-
-        if ((typeof req.amortPeriod !== 'number') || req.amortPeriod < 5 || req.amortPeriod > 25) {
-            errors.push("Invalid Amortization Period (Minimum is 5 and Maximum is 25).");
-        }
-    }
-
-    if (errors.length) {
-        console.log(errors);
-    }
-
-    return errors;
-}
-
-var errorHandler = function(msg, status)
-{
-    var error = new Error();
-    error.errorMessage = msg;
-    error.status = status;
-    return error;
-}
-
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
 server = app.listen(3000, function () {
-    console.log("app running on port.", server.address().port);
+    console.log("API running on port ", server.address().port);
 });
