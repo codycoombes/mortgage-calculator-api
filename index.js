@@ -39,7 +39,7 @@ app.get('/payment-amount', (req, res) => {
     	
         var payment = tools.paymentCalculator(asking_price, down_payment, payment_schedule, amortization_period, interest_rate);
         
-        if (payment === "number") {
+        if (typeof payment === "number") {
             res.json(
             {
                 payment_amount : payment,
