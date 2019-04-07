@@ -11,6 +11,9 @@ const INSRAUNCE_RATE_3 = 0.018;
 
 module.exports = {
 
+	// Calculates the recurring payment amount 
+	// PARAMS: asking_price, down_payment, payment_schedule, amortization_period, interest_rate
+	// RETURNS: payment_amount
 	paymentCalculator: function(asking_price, down_payment, payment_schedule, amortization_period, interest_rate) {
 		var loan_principal = asking_price - down_payment;
 		var down_payment_rate = down_payment / asking_price;
@@ -66,10 +69,13 @@ module.exports = {
 		// L = Loan Principal
 		// c = Interest Rate
 		// n = Frequency of payments
-		var payment = round(((loan_principal*(c * ((1+c)**n))) / (((1+c)**n)-1)), 2);
-		return payment;
+		var payment_amount = round(((loan_principal*(c * ((1+c)**n))) / (((1+c)**n)-1)), 2);
+		return payment_amount;
 	},
 
+	// Calculates the maximum mortgage that can be taken out
+	// INPUT: payment_amount, down_payment, payment_schedule, amortization_period, interest_rate
+	// RETURNS: maximum_mortgage
 	maxMortgage: function(payment_amount, down_payment, payment_schedule, amortization_period, interest_rate) {
 		// Payment formula: P = L[c(1 + c)^n]/[(1 + c)^n - 1]
 		// L = P[(1+c)^n-1] / [c(1+c)^n]
@@ -81,8 +87,8 @@ module.exports = {
 		var c = interest_rate / PAYMENT_SCHEDULE_DICT[payment_schedule];
 		var n = amortization_period * PAYMENT_SCHEDULE_DICT[payment_schedule];
 		var loan_principal = ((payment_amount * (((1+c)**n)-1)) / (c * (1+c)**n));
-		loan_principal = round((loan_principal + down_payment), 2);
-		return loan_principal;
+		var maximum_mortgage = round((loan_principal + down_payment), 2);
+		return maximum_mortgage;
 	},
 
 	// Validate that are no missing parameters and parameters are valid
@@ -124,7 +130,7 @@ module.exports = {
 	},
 
 	// Validate that are no missing parameters and parameters are valid
-	// INPUT: JSON object
+	// PARAMS: JSON
 	// RETURN: error message
     validateMortgage: function(req) {
 	    var errors  = [];
@@ -162,7 +168,7 @@ module.exports = {
 
 	    return errors;
 	},
-
+	
 	errorHandler: function(msg, status) {
 	    var error = new Error();
 	    error.errorMessage = msg;

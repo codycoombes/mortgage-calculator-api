@@ -37,15 +37,14 @@ app.get('/payment-amount', (req, res) => {
         var payment_schedule = req.body.payment_schedule.toLowerCase();
         var amortization_period = req.body.amortization_period;
     	
-        var payment = tools.paymentCalculator(asking_price, down_payment, payment_schedule, amortization_period, interest_rate);
+        var payment_amount = tools.paymentCalculator(asking_price, down_payment, payment_schedule, amortization_period, interest_rate);
         
-        if (typeof payment === "number") {
+        // If payment_amount is not a number then payment_amount includes an error message
+        if (typeof payment_amount === "number") {
             res.json(
             {
-                payment_amount : payment,
-                payment_schedule: payment_schedule,
-                status : 200,
-                timestamp : parseInt(Date.now())
+                payment_amount : payment_amount,
+                payment_schedule: payment_schedule
             });
         }
 
@@ -92,9 +91,7 @@ app.get('/mortgage-amount', (req, res) => {
         if (typeof maximum_mortgage === "number") {
             res.json(
             {
-                maxmium_mortgage : maximum_mortgage,
-                status : 200,
-                timestamp : parseInt(Date.now())
+                maxmium_mortgage : maximum_mortgage
             });
         }
 
@@ -118,12 +115,10 @@ app.patch('/interest-rate', (req, res) => {
 
     // Return JSON object if valid otherwise return error message
     if (typeof interest_rate === "number" && interest_rate >= 0 && interest_rate <= 100) {
+        message = "The interest rate has been updated from " + old_interest_rate + "% to " + new_interest_rate + "%.";
     	res.json(
         {
-            old_interest_rate: old_interest_rate,
-            new_interest_rate: new_interest_rate,
-            status: 200,
-            timestamp: parseInt(Date.now())
+            message: message
         });
     }
 
@@ -132,7 +127,6 @@ app.patch('/interest-rate', (req, res) => {
         return res.send(tools.errorHandler(error, 400));
     }
 });
-
 
 server = app.listen(3000, function () {
     console.log("API running on port ", server.address().port);
