@@ -24,10 +24,8 @@ app.use(body_parser.urlencoded({extended: true}))
 // amortization_period: Min 5 years, max 25 years
 // RETURN: Recurring payment amount of a mortgage in JSON format
 app.get('/payment-amount', (req, res) => {
-
     // Validate the input and error check
     var errors = tools.validatePayment(req.body);
-
     if (errors.length) {
         return res.send(tools.errorHandler(errors, 400))
     }
@@ -41,7 +39,7 @@ app.get('/payment-amount', (req, res) => {
     	
         var payment = tools.paymentCalculator(asking_price, down_payment, payment_schedule, amortization_period, interest_rate);
         
-        if (payment !== -1) {
+        if (payment === "number") {
             res.json(
             {
                 payment_amount : payment,
@@ -52,7 +50,7 @@ app.get('/payment-amount', (req, res) => {
         }
 
         else {
-            errors = "Down payment must be at least 5% of first $500k plus 10% of any amount above $500k (So $50k on a $750k mortgage)";
+            errors = payment;
             return res.send(tools.errorHandler(errors, 400))
         }
     }
@@ -71,7 +69,7 @@ app.get('/payment-amount', (req, res) => {
 // amortization_period: Min 5 years, max 25 years
 // RETURN: Maximum mortgage that can be taken out
 app.get('/mortgage-amount', (req, res) => {
-	 // Validate the input and error check
+	// Validate the input and error check
     var errors = tools.validateMortgage(req.body);
 
     if (errors.length) {
@@ -79,15 +77,19 @@ app.get('/mortgage-amount', (req, res) => {
     }
 
     else {
-
         var payment_amount = req.body.payment_amount;
         var down_payment = req.body.down_payment;
         var payment_schedule = req.body.payment_schedule.toLowerCase();
         var amortization_period = req.body.amortization_period;
+
+        // Down payment is optional, set it to zero if it was not included
+        if (!down_payment) {
+            down_payment = 0;
+        }
         
         var maximum_mortgage = tools.maxMortgage(payment_amount, down_payment, payment_schedule, amortization_period, interest_rate);
         
-        if (maximum_mortgage !== -1) {
+        if (typeof maximum_mortgage === "number") {
             res.json(
             {
                 maxmium_mortgage : maximum_mortgage,
@@ -97,8 +99,8 @@ app.get('/mortgage-amount', (req, res) => {
         }
 
         else {
-            errors = "Down payment must be at least 5% of first $500k plus 10% of any amount above $500k (So $50k on a $750k mortgage)";
-            return res.send(tools.errorHandler(errors, 400))
+            errors = maximum_mortgage;
+            return res.send(tools.errorHandler(errors, 400));
         }
     }
 });
@@ -110,8 +112,7 @@ app.get('/mortgage-amount', (req, res) => {
 // interest_rate: the new interest rate (from 0 to 100)
 // RETURN: the old and new interest rate
 app.patch('/interest-rate', (req, res) => {
-
-	var old_interest_rate = interest_rate * 100;
+    var old_interest_rate = interest_rate * 100;
     interest_rate = req.body.interest_rate / 100;
     var new_interest_rate = interest_rate * 100;
 
@@ -127,7 +128,7 @@ app.patch('/interest-rate', (req, res) => {
     }
 
     else {
-        var error = "Interest rate must be ";
+        var error = "Interest rate must be a number (%) between 0 and 100.";
         return res.send(tools.errorHandler(error, 400));
     }
 });

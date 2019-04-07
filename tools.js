@@ -12,17 +12,13 @@ const INSRAUNCE_RATE_3 = 0.018;
 module.exports = {
 
 	paymentCalculator: function(asking_price, down_payment, payment_schedule, amortization_period, interest_rate) {
-
 		var loan_principal = asking_price - down_payment;
 		var down_payment_rate = down_payment / asking_price;
-
 		var c = interest_rate / PAYMENT_SCHEDULE_DICT[payment_schedule];
 		var n = amortization_period * PAYMENT_SCHEDULE_DICT[payment_schedule];
 
-
-		//Must be at least 5% of first $500k plus 10% of any amount above $500k (So $50k on a $750k
-		//mortgage)
-
+		// Must be at least 5% of first $500k plus 10% of any amount above $500k (So $50k on a $750k
+		// mortgage)
 		var minimal_down_payment = 0;
 
 		if (down_payment > 500000) {
@@ -34,21 +30,23 @@ module.exports = {
 		}
  
 		if (down_payment < minimal_down_payment) {
-			return -1;
+			var error = "Down payment must be at least 5% of first $500k plus 10% of any amount above $500k (So $50k on a $750k mortgage).";
+			return error;
 		}
 
-		// Mortgage insurance is required on all mortgages with less than 20% down. Insurance must be
-		// calculated and added to the mortgage principal. Mortgage insurance is not available for
-		// mortgages > $1 million.
+		// Mortgage insurance is not available for mortgages > $1mil so down payment must be 20%
+		if (down_payment > 1000000 && down_paymnent_rate < 0.2) {
+			var error = "Down payment must be 20% or more because mortgage insurance is not available for mortgages over $1 million."
+			return error;
+		}
+
 		// Mortgage insurance rates are as follows:
 		// Down payment Insurance Cost
 		// 5-9.99% 3.15%
 		// 10-14.99% 2.4%
 		// 15%-19.99% 1.8%
 		// 20%+ N/A
-
 		if (down_payment_rate < INSURANCE_REQUIRED_DOWN) {
-
 			if (down_payment_rate >= 0.05 && down_payment_rate < 0.1) {
 				loan_principal = loan_principal + (loan_principal * INSURANCE_RATE_1);
 			}
@@ -60,7 +58,6 @@ module.exports = {
 			else if (down_payment_rate >= 0.15 && down_payment_rate < 0.2) {
 				loan_principal = loan_principal + (loan_principal * INSRAUNCE_RATE_3);
 			}
-
 			// else 20%+ N/A
 		}
 
@@ -69,17 +66,11 @@ module.exports = {
 		// L = Loan Principal
 		// c = Interest Rate
 		// n = Frequency of payments
-
-		var payment = round(((loan_principal*(c * (1+c)**n)) / ((1+c)**n-1)), 2);
-
+		var payment = round(((loan_principal*(c * ((1+c)**n))) / (((1+c)**n)-1)), 2);
 		return payment;
 	},
 
 	maxMortgage: function(payment_amount, down_payment, payment_schedule, amortization_period, interest_rate) {
-
-		var c = interest_rate / PAYMENT_SCHEDULE_DICT[payment_schedule];
-		var n = amortization_period * PAYMENT_SCHEDULE_DICT[payment_schedule];
-
 		// Payment formula: P = L[c(1 + c)^n]/[(1 + c)^n - 1]
 		// L = P[(1+c)^n-1] / [c(1+c)^n]
 		// P = Payment
@@ -87,50 +78,10 @@ module.exports = {
 		// c = Interest Rate
 		// n = Frequency of payments
 
-		var loan_principal = ((payment_amount * ((1+c)**n-1)) / (c * (1+c)**n));
-
-		// down_payment is optional
-		if (down_payment > 0) {
-
-			var down_payment_rate = down_payment / loan_principal;
-
-			if (down_payment_rate < INSURANCE_REQUIRED_DOWN) {
-
-				if (down_payment_rate >= 0.05 && down_payment_rate < 0.1) {
-					loan_principal = loan_principal * (1 - INSURANCE_RATE_1);
-				}
-
-				else if (down_payment_rate >= 0.1 && down_payment_rate < 0.15) {
-					loan_principal = loan_principal * (1 - INSURANCE_RATE_2);
-				}
-
-				else if (down_payment_rate >= 0.15 && down_payment_rate < 0.2) {
-					loan_principal = loan_principal * (1 - INSRAUNCE_RATE_3);
-				}
-
-				// else 20%+ N/A
-			}
-		}
-
-		// If no down payment deduct using highest rate
-		else {
-
-			down_payment = loan_principal * (1 - INSURANCE_RATE_1);
-
-			if (loan_principal > 500000) {
-				down_payment = (loan_principal - 500000)*(0.1) + (500000 * 0.05);
-			}
-
-			else {
-				down_payment = (loan_principal * 0.05);
-			}
-		}
-
-		console.log(down_payment);
-		console.log(loan_principal);
-
+		var c = interest_rate / PAYMENT_SCHEDULE_DICT[payment_schedule];
+		var n = amortization_period * PAYMENT_SCHEDULE_DICT[payment_schedule];
+		var loan_principal = ((payment_amount * (((1+c)**n)-1)) / (c * (1+c)**n));
 		loan_principal = round((loan_principal + down_payment), 2);
-
 		return loan_principal;
 	},
 
@@ -138,12 +89,11 @@ module.exports = {
 	// PARAMS: JSON object
 	// RETURN: error message or empty message if no errors
     validatePayment: function(req) {
-
 	    var errors  = [];
 
 	    // Check if any fields are missing
 	    if (!req.asking_price || !req.down_payment || !req.payment_schedule || !req.amortization_period ) {
-	        errors.push("Missing inputs. Need asking price, down payment, payment schedule, and amortization period.");
+	        errors.push("Asking price, down payment, payment schedule, and amortization period are required for calculating payments.");
 	    }
 
 	    // Check if fields are valid
@@ -177,7 +127,6 @@ module.exports = {
 	// INPUT: JSON object
 	// RETURN: error message
     validateMortgage: function(req) {
-
 	    var errors  = [];
 
 	    // Check if any fields are missing
@@ -187,7 +136,6 @@ module.exports = {
 
 	    // Check if fields are valid
 	    else {
-
 	        if ((typeof req.payment_amount !== 'number') || req.payment_amount < 0) {
 	            errors.push("Payment amount must be a number greater than 0.");
 	        }
@@ -216,7 +164,6 @@ module.exports = {
 	},
 
 	errorHandler: function(msg, status) {
-	    
 	    var error = new Error();
 	    error.errorMessage = msg;
 	    error.status = status;
