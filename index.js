@@ -31,7 +31,6 @@ app.get('/payment-amount', (req, res) => {
     }
 
     else {
-
         var asking_price = req.body.asking_price;
         var down_payment = req.body.down_payment;
         var payment_schedule = req.body.payment_schedule.toLowerCase();

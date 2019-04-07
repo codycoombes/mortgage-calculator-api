@@ -17,9 +17,7 @@ module.exports = {
 	paymentCalculator: function(asking_price, down_payment, payment_schedule, amortization_period, interest_rate) {
 		var loan_principal = asking_price - down_payment;
 		var down_payment_rate = down_payment / asking_price;
-		var c = interest_rate / PAYMENT_SCHEDULE_DICT[payment_schedule];
-		var n = amortization_period * PAYMENT_SCHEDULE_DICT[payment_schedule];
-
+		
 		// Must be at least 5% of first $500k plus 10% of any amount above $500k (So $50k on a $750k
 		// mortgage)
 		var minimal_down_payment = 0;
@@ -69,6 +67,8 @@ module.exports = {
 		// L = Loan Principal
 		// c = Interest Rate
 		// n = Frequency of payments
+		var c = interest_rate / PAYMENT_SCHEDULE_DICT[payment_schedule];
+		var n = amortization_period * PAYMENT_SCHEDULE_DICT[payment_schedule];
 		var payment_amount = round(((loan_principal*(c * ((1+c)**n))) / (((1+c)**n)-1)), 2);
 		return payment_amount;
 	},
@@ -83,7 +83,6 @@ module.exports = {
 		// L = Loan Principal
 		// c = Interest Rate
 		// n = Frequency of payments
-
 		var c = interest_rate / PAYMENT_SCHEDULE_DICT[payment_schedule];
 		var n = amortization_period * PAYMENT_SCHEDULE_DICT[payment_schedule];
 		var loan_principal = ((payment_amount * (((1+c)**n)-1)) / (c * (1+c)**n));
@@ -95,90 +94,89 @@ module.exports = {
 	// PARAMS: JSON object
 	// RETURN: error message or empty message if no errors
     validatePayment: function(req) {
-	    var errors  = [];
+		var errors  = [];
 
-	    // Check if any fields are missing
-	    if (!req.asking_price || !req.down_payment || !req.payment_schedule || !req.amortization_period ) {
-	        errors.push("Asking price, down payment, payment schedule, and amortization period are required for calculating payments.");
-	    }
+		// Check if any fields are missing
+		if (!req.asking_price || !req.down_payment || !req.payment_schedule || !req.amortization_period ) {
+		        errors.push("Asking price, down payment, payment schedule, and amortization period are required for calculating payments.");
+		}
 
-	    // Check if fields are valid
-	    else {
+		// Check if fields are valid
+		else {
+			if ((typeof req.asking_price !== 'number') || req.asking_price < 0) {
+				errors.push("Asking price must be a number greater than 0.");
+			}
 
-	        if ((typeof req.asking_price !== 'number') || req.asking_price < 0) {
-	            errors.push("Asking price must be a number greater than 0.");
-	        }
+			if ((typeof req.down_payment !== 'number') || req.down_payment <= 0 || req.asking_price < req.down_payment) {
+				errors.push("Down payment must be greater than or equal to 0 but smaller than asking price.");
+			}
 
-	        if ((typeof req.down_payment !== 'number') || req.down_payment <= 0 || req.asking_price < req.down_payment) {
-	            errors.push("Down payment must be greater than or equal to 0 but smaller than asking price.");
-	        }
+			if ((typeof req.payment_schedule !== 'string') || PAYMENT_SCHEDULE_TYPES.indexOf(req.payment_schedule.toLowerCase()) <= -1) {
+				errors.push("Payment schedule must be in format of weekly, biweekly, or monthly.");
+			}
 
-	        if ((typeof req.payment_schedule !== 'string') || PAYMENT_SCHEDULE_TYPES.indexOf(req.payment_schedule.toLowerCase()) <= -1) {
-	            errors.push("Payment schedule must be in format of weekly, biweekly, or monthly.");
-	        }
+			if ((typeof req.amortization_period !== 'number') || req.amortization_period < 5 || req.amortization_period > 25) {
+				errors.push("Amortization must be no less than 5 and no greater than 25.");
+			}
+		}
 
-	        if ((typeof req.amortization_period !== 'number') || req.amortization_period < 5 || req.amortization_period > 25) {
-	            errors.push("Amortization must be no less than 5 and no greater than 25.");
-	        }
-	    }
+		if (errors.length) {
+			console.log(errors);
+		}
 
-	    if (errors.length) {
-	        console.log(errors);
-	    }
-
-	    return errors;
+		return errors;
 	},
 
 	// Validate that are no missing parameters and parameters are valid
 	// PARAMS: JSON
 	// RETURN: error message
     validateMortgage: function(req) {
-	    var errors  = [];
+		var errors  = [];
 
-	    // Check if any fields are missing
-	    if (!req.payment_amount || !req.payment_schedule || !req.amortization_period ) {
-	        errors.push("Missing inputs. Need payment amount, payment schedule, and amortization period (Down payment is optional).");
-	    }
+		// Check if any fields are missing
+		if (!req.payment_amount || !req.payment_schedule || !req.amortization_period ) {
+			errors.push("Missing inputs. Need payment amount, payment schedule, and amortization period (Down payment is optional).");
+		}
 
-	    // Check if fields are valid
-	    else {
-	        if ((typeof req.payment_amount !== 'number') || req.payment_amount < 0) {
-	            errors.push("Payment amount must be a number greater than 0.");
-	        }
+		// Check if fields are valid
+		else {
+			if ((typeof req.payment_amount !== 'number') || req.payment_amount < 0) {
+				errors.push("Payment amount must be a number greater than 0.");
+			}
 
-	        // down_payment is optional so check first if a field was entered
-	        if (req.down_payment) {
-		        if ((typeof req.down_payment !== 'number') || req.down_payment <= 0) {
-		            errors.push("Invalid down payment.");
-		        }
-		    }
+			// down_payment is optional so check first if a field was entered
+			if (req.down_payment) {
+				if ((typeof req.down_payment !== 'number') || req.down_payment <= 0) {
+					errors.push("Invalid down payment.");
+				}
+			}
 
-	        if ((typeof req.payment_schedule !== 'string') || PAYMENT_SCHEDULE_TYPES.indexOf(req.payment_schedule.toLowerCase()) <= -1) {
-	            errors.push("Payment schedule must be in format of weekly, biweekly, or monthly.");
-	        }
+			if ((typeof req.payment_schedule !== 'string') || PAYMENT_SCHEDULE_TYPES.indexOf(req.payment_schedule.toLowerCase()) <= -1) {
+				errors.push("Payment schedule must be in format of weekly, biweekly, or monthly.");
+			}
 
-	        if ((typeof req.amortization_period !== 'number') || req.amortization_period < 5 || req.amortization_period > 25) {
-	            errors.push("Amortization must be no less than 5 and no greater than 25.");
-	        }
-	    }
+			if ((typeof req.amortization_period !== 'number') || req.amortization_period < 5 || req.amortization_period > 25) {
+				errors.push("Amortization must be no less than 5 and no greater than 25.");
+			}
+		}
 
-	    if (errors.length) {
-	        console.log(errors);
-	    }
+		if (errors.length) {
+			console.log(errors);
+		}
 
-	    return errors;
+		return errors;
 	},
-	
+
 	errorHandler: function(msg, status) {
-	    var error = new Error();
-	    error.errorMessage = msg;
-	    error.status = status;
-	    return error;
+		var error = new Error();
+		error.errorMessage = msg;
+		error.status = status;
+		return error;
 	}
 
 }
 
 // Handles rounding to nearest dec
 function round(val, dec) {
-		return Number(Math.round(val + 'e' + dec) + 'e-' + dec);
+	return Number(Math.round(val + 'e' + dec) + 'e-' + dec);
 }
