@@ -1,7 +1,9 @@
 # Mortgage Calculator API
-API for calculating mortgages that accepts and returns JSON <br>
+Calculates recurring mortgage payments and maximum mortgages<br>
+API accepts and returns JSON only
 Implemented using Express.js and Node.js <br>
 Tested using Express.js version 4.14.0, Node.js version 10.15.3, and Postman chrome extension <br>
+Download and install npm/Node.js here: https://www.npmjs.com/get-npm
 
 ### Setup: <br>
 ```Clone the directory and navigate to the workspace``` <br>
@@ -36,7 +38,7 @@ Maximum Mortgage that can be taken out
 #### PATCH /interest-rate <br>
 Change the interest rate used by the application <br>
 Params: <br>
-Interest Rate <br>
+Interest Rate (% from 0 to 100) <br>
 
 Return:<br>
 Message indicating the old and new interest rate
@@ -46,5 +48,9 @@ mortgage) <br>
 `**` Min 5 years, max 25 years <br>
 `***` Weekly, biweekly, monthly <br>
 `****` If included its value should be added to the maximum mortgage returned <br>
+
+### Postman GET /payment-amount example:
+
+![Screenshot](images/payment_example.PNG)
 
 Created by Cody Coombes
