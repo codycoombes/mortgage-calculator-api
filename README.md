@@ -6,7 +6,7 @@ Tested using Express.js version 4.14.0, Node.js version 10.15.3, and Postman chr
 Download and install npm/Node.js here: https://www.npmjs.com/get-npm
 
 ### Setup: <br>
-```Clone the directory and navigate to the workspace``` <br>
+```Clone the repository and navigate to the workspace``` <br>
 ```npm install``` <br>
 ```node index.js``` <br>
 
