@@ -93,7 +93,7 @@ module.exports = {
 	// Validate that are no missing parameters and parameters are valid
 	// PARAMS: JSON object
 	// RETURN: error message or empty message if no errors
-    validatePayment: function(req) {
+	validatePayment: function(req) {
 		var errors  = [];
 
 		// Check if any fields are missing
@@ -130,8 +130,8 @@ module.exports = {
 	// Validate that are no missing parameters and parameters are valid
 	// PARAMS: JSON
 	// RETURN: error message
-    validateMortgage: function(req) {
-		var errors  = [];
+	validateMortgage: function(req) {
+	var errors  = [];
 
 		// Check if any fields are missing
 		if (!req.payment_amount || !req.payment_schedule || !req.amortization_period ) {
