@@ -15,7 +15,7 @@ app.use(body_parser.urlencoded({extended: true}))
 // Get the recurring payment amount of a mortgage
 // Accepts and returns JSON
 // Must have all the fields or returns error
-// Example JSON input: {"asking_price": 700000, "down_payment": 200000, "payment_schedule": "weekly", "amortization_period": 10}
+// Example JSON: {"asking_price": 700000, "down_payment": 200000, "payment_schedule": "weekly", "amortization_period": 10}
 //
 // PARAMS:
 // asking_price: Asking price in dollars
@@ -36,7 +36,7 @@ app.get('/payment-amount', (req, res) => {
         var payment_schedule = req.body.payment_schedule.toLowerCase();
         var amortization_period = req.body.amortization_period;
     	
-        var payment_amount = tools.paymentCalculator(asking_price, down_payment, payment_schedule, amortization_period, interest_rate);
+        var payment_amount = tools.paymentAmount(asking_price, down_payment, payment_schedule, amortization_period, interest_rate);
         
         // If payment_amount is not a number then payment_amount includes an error message
         if (typeof payment_amount === "number") {
@@ -58,7 +58,7 @@ app.get('/payment-amount', (req, res) => {
 // Get the maximum mortgage amount
 // Accepts and returns JSON
 // Must have all the fields or returns error (except for down_payment which is optional)
-// Example JSON input: {"payment_amount": 700000, "down_payment": 200000, "payment_schedule": "weekly", "amortization_period": 10}
+// Example JSON: {"payment_amount": 700000, "down_payment": 200000, "payment_schedule": "weekly", "amortization_period": 10}
 //
 // PARAMS:
 // payment_amount: The reoccurring payment amount
@@ -103,17 +103,17 @@ app.get('/mortgage-amount', (req, res) => {
 
 // Change the interest rate (%) used by the application
 // Accepts and returns JSON
-// Example JSON input: {"interest_rate": 5}
+// Example JSON: {"interest_rate": 5}
 // PARAMS:
 // interest_rate: the new interest rate (from 0 to 100)
 // RETURN: the old and new interest rate
 app.patch('/interest-rate', (req, res) => {
-    var old_interest_rate = interest_rate * 100;
-    interest_rate = req.body.interest_rate / 100;
-    var new_interest_rate = interest_rate * 100;
-
     // Return JSON object if valid otherwise return error message
-    if (typeof interest_rate === "number" && interest_rate >= 0 && interest_rate <= 100) {
+    if (typeof req.body.interest_rate === "number" && req.body.interest_rate >= 0 && req.body.interest_rate <= 100) {
+        // Convert interest rate from % to decimal 
+        var old_interest_rate = interest_rate * 100;
+        interest_rate = req.body.interest_rate / 100;
+        var new_interest_rate = interest_rate * 100;
         message = "The interest rate has been updated from " + old_interest_rate + "% to " + new_interest_rate + "%.";
     	res.json(
         {
@@ -122,7 +122,7 @@ app.patch('/interest-rate', (req, res) => {
     }
 
     else {
-        var error = "Interest rate must be a number (%) between 0 and 100.";
+        var error = "Interest rate (%) must be a number between 0 and 100.";
         return res.send(tools.errorHandler(error, 400));
     }
 });

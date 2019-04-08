@@ -4,7 +4,6 @@
 
 const PAYMENT_SCHEDULE_TYPES = ["weekly", "biweekly", "monthly"];
 const PAYMENT_SCHEDULE_DICT = {"weekly": 52, "biweekly": 26, "monthly": 12};
-const INSURANCE_REQUIRED_DOWN = 0.2;
 const INSURANCE_RATE_1 = 0.0315;
 const INSURANCE_RATE_2 = 0.024;
 const INSRAUNCE_RATE_3 = 0.018;
@@ -14,7 +13,7 @@ module.exports = {
 	// Calculates the recurring payment amount 
 	// PARAMS: asking_price, down_payment, payment_schedule, amortization_period, interest_rate
 	// RETURNS: payment_amount
-	paymentCalculator: function(asking_price, down_payment, payment_schedule, amortization_period, interest_rate) {
+	paymentAmount: function(asking_price, down_payment, payment_schedule, amortization_period, interest_rate) {
 		var loan_principal = asking_price - down_payment;
 		var down_payment_rate = down_payment / asking_price;
 		
@@ -47,7 +46,7 @@ module.exports = {
 		// 10-14.99% 2.4%
 		// 15%-19.99% 1.8%
 		// 20%+ N/A
-		if (down_payment_rate < INSURANCE_REQUIRED_DOWN) {
+		if (down_payment_rate < 0.2) {
 			if (down_payment_rate >= 0.05 && down_payment_rate < 0.1) {
 				loan_principal = loan_principal + (loan_principal * INSURANCE_RATE_1);
 			}
@@ -74,6 +73,7 @@ module.exports = {
 	},
 
 	// Calculates the maximum mortgage that can be taken out
+	// Did not include mortgage insurance in calculation because down payment was optional 
 	// INPUT: payment_amount, down_payment, payment_schedule, amortization_period, interest_rate
 	// RETURNS: maximum_mortgage
 	maxMortgage: function(payment_amount, down_payment, payment_schedule, amortization_period, interest_rate) {
