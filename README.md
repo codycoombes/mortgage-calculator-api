@@ -64,7 +64,8 @@ Down payment Insurance Cost <br>
 5-9.99% 3.15% <br>
 10-14.99% 2.4% <br>
 15%-19.99% 1.8% <br>
-20%+ N/A <br>
+20%+ N/A
+
 Payment formula: P = L[c(1 + c)^n]/[(1 + c)^n - 1] <br>
 P = Payment <br>
 L = Loan Principal <br>
